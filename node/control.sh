@@ -47,8 +47,9 @@ send_command() {
 
 check_response() {
     response=$1
-    printf '%s' "$response" | grep -q '"ok"[[:space:]]*:[[:space:]]*false' &&
+    if printf '%s' "$response" | grep -q '"ok"[[:space:]]*:[[:space:]]*false'; then
         fail "mqvpn Control API rejected the command"
+    fi
 }
 
 case "${1:-}" in

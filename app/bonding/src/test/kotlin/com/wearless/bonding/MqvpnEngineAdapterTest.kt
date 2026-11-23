@@ -107,7 +107,8 @@ class MqvpnEngineAdapterTest {
         val snap = adapter.notMeasuredSnapshot(links, failoverActive = true)
         assertTrue(snap.failoverActive)
         assertFalse(snap.isMeasured)
-        assertEquals(0L, snap.aggregatedBps)
+        assertEquals(0L, snap.aggregatedRxBps)
+        assertEquals(0L, snap.aggregatedTxBps)
         snap.links.forEach { link ->
             assertEquals(0L, link.rxBps)
             assertEquals(0L, link.rxBytes)
@@ -139,7 +140,8 @@ class DefaultBondingEngineTest {
         val snap = engine.currentSnapshot
         assertEquals(2, snap.links.size)
         assertFalse(snap.isMeasured)
-        assertEquals(0L, snap.aggregatedBps)
+        assertEquals(0L, snap.aggregatedRxBps)
+        assertEquals(0L, snap.aggregatedTxBps)
     }
 
     @Test
@@ -156,7 +158,9 @@ class DefaultBondingEngineTest {
         val snap = engine.currentSnapshot
         assertTrue(snap.failoverActive)
         assertTrue(snap.isMeasured)
-        assertEquals(150L, snap.aggregatedBps)
+        // rx=100, tx=50 for the one measured link
+        assertEquals(100L, snap.aggregatedRxBps)
+        assertEquals(50L, snap.aggregatedTxBps)
     }
 
     @Test

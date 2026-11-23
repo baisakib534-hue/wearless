@@ -11,9 +11,8 @@ import android.os.Debug
 import android.os.PowerManager
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -59,7 +58,11 @@ class ResourceMonitorActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        poller = CoroutineScope(Dispatchers.Main + Job()).launch {
+        // Cancel any previous poller before relaunching to avoid leaks across
+        // rapid resume/pause. lifecycleScope cancels automatically when the
+        // activity is destroyed.
+        poller?.cancel()
+        poller = lifecycleScope.launch {
             while (isActive) {
                 sample()
                 delay(2_000)
@@ -125,15 +128,26 @@ class ResourceMonitorActivity : AppCompatActivity() {
                 "${l.label}: rx $rx, total $bytes"
             }
         } else {
-            "Per-link data: NOT MEASURED (bonding engine not wired)"
+            "Per-link data: NOT MEASURED (bonding engine not wired)\n" +
+            "Note: per-link and sensor data need the bonding engine and a real device."
         }
     }
 
     private fun sampleCpu(pid: Int): String {
         return try {
-            val stat = java.io.File("/proc/$pid/stat").readText().split(" ")
-            // fields 14 (utime) and 15 (stime), 1-based -> index 13, 14
-            val cpuTicks = stat[13].toLong() + stat[14].toLong()
+            val stat = java.io.File("/proc/$pid/stat").readText()
+            // /proc/<pid>/stat format: pid (comm) state ... utime stime ...
+            // The comm field (field 2) is in parentheses and can contain spaces/parens;
+            // parse after the LAST ')' to get fields 3+ safely.
+            val lastParen = stat.lastIndexOf(')')
+            val fields = if (lastParen >= 0 && lastParen + 2 < stat.length) {
+                stat.substring(lastParen + 2).split(" ")
+            } else {
+                stat.split(" ")
+            }
+            // utime (field 14, index 11 in post-comm array) and stime (field 15, index 12)
+            if (fields.size < 13) return "CPU: unavailable"
+            val cpuTicks = fields[11].toLong() + fields[12].toLong()
             val now = System.currentTimeMillis()
             if (lastCpuMillis >= 0 && now > lastWallMillis) {
                 val ticksPerSec = 100L // standard USER_HZ on Android/Linux
@@ -145,7 +159,7 @@ class ResourceMonitorActivity : AppCompatActivity() {
             } else {
                 "CPU (approx, process): measuring…"
             }
-            .also { line ->
+            .also {
                 lastCpuMillis = cpuTicks
                 lastWallMillis = now
             }

@@ -41,9 +41,19 @@ class NodeConfigActivity : AppCompatActivity() {
                 Toast.makeText(this, "Both server address and node key are required.", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
-            NodeConfigStore.save(this, server, key)
-            Toast.makeText(this, "Saved (encrypted). Key will not be shown again.", Toast.LENGTH_LONG).show()
-            finish()
+            try {
+                NodeConfigStore.save(this, server, key)
+                Toast.makeText(this, "Saved (encrypted). Key will not be shown again.", Toast.LENGTH_LONG).show()
+                finish()
+            } catch (e: Exception) {
+                // EncryptedSharedPreferences can fail on some OEMs or if the
+                // keystore is unavailable; show an honest error to the user.
+                Toast.makeText(
+                    this,
+                    "Failed to save config: ${e.message ?: "Keystore unavailable"}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 }

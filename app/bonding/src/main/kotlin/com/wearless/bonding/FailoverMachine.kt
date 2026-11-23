@@ -56,7 +56,7 @@ class FailoverMachine(private val linkIds: Set<String>) {
         if (linkId !in linkIds) return state
         upLinks.add(linkId)
         state = when {
-            state == State.IDLE || state == State.ALL_LINKS_LOST -> state // no session / dead session: recovery is the engine's call, not ours
+            state == State.IDLE -> State.IDLE
             upLinks.size == linkIds.size -> State.RUNNING
             upLinks.isNotEmpty() -> State.FAILOVER
             else -> State.ALL_LINKS_LOST

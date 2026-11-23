@@ -23,7 +23,7 @@ class DefaultBondingEngine(
 ) : BondingEngine {
 
     private val snapshot = MutableStateFlow(
-        BondingSnapshot(links = emptyList(), aggregatedBps = 0, isMeasured = false, failoverActive = false)
+        BondingSnapshot(links = emptyList(), aggregatedRxBps = 0, aggregatedTxBps = 0, isMeasured = false, failoverActive = false)
     )
 
     private var failover: FailoverMachine? = null
@@ -48,7 +48,7 @@ class DefaultBondingEngine(
         prepared = null
         failover?.stop()
         failover = null
-        snapshot.value = BondingSnapshot(links = emptyList(), aggregatedBps = 0, isMeasured = false, failoverActive = false)
+        snapshot.value = BondingSnapshot(links = emptyList(), aggregatedRxBps = 0, aggregatedTxBps = 0, isMeasured = false, failoverActive = false)
     }
 
     override fun stats(): Flow<BondingSnapshot> = snapshot.asStateFlow()

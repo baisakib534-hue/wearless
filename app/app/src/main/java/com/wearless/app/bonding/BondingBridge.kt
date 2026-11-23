@@ -30,12 +30,13 @@ object BondingBridge {
 
     data class BridgeSnapshot(
         val links: List<AppLink>,
-        val aggregatedBps: Long?,
+        val aggregatedRxBps: Long?,
+        val aggregatedTxBps: Long?,
         val isMeasured: Boolean,
         val failoverActive: Boolean
     ) {
         companion object {
-            val NOT_MEASURED = BridgeSnapshot(emptyList(), null, false, false)
+            val NOT_MEASURED = BridgeSnapshot(emptyList(), null, null, false, false)
         }
     }
 
@@ -62,11 +63,14 @@ object BondingBridge {
      * Start the bonding engine. The engine (DefaultBondingEngine) itself
      * returns Result.failure(BondingError.EngineNotInstalled) when no real
      * data plane is present — that failure propagates honestly.
+     *
+     * scheduler=null means "auto": SchedulerPolicy.resolve decides WLB vs
+     * MIN_RTT from real RTT observations, never a guess.
      */
     fun start(
         serverAddress: String,
         keyRef: String,
-        schedulerWlb: Boolean,
+        scheduler: Scheduler?,
         links: List<AndroidLinkHandle>
     ): Result<Unit> {
         val e = engine ?: DefaultBondingEngine().also { engine = it }
@@ -76,7 +80,7 @@ object BondingBridge {
         val config = BondingConfig(
             serverAddress = serverAddress,
             keyRef = keyRef,
-            scheduler = if (schedulerWlb) Scheduler.WLB else Scheduler.MIN_RTT,
+            scheduler = scheduler,
             reorderBuffer = true
         )
         val result = e.start(config, bondingLinks)
@@ -127,7 +131,8 @@ object BondingBridge {
         }
         return BridgeSnapshot(
             links = mapped,
-            aggregatedBps = if (snap.isMeasured) snap.aggregatedBps else null,
+            aggregatedRxBps = if (snap.isMeasured) snap.aggregatedRxBps else null,
+            aggregatedTxBps = if (snap.isMeasured) snap.aggregatedTxBps else null,
             isMeasured = snap.isMeasured,
             failoverActive = snap.failoverActive
         )

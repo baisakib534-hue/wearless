@@ -24,7 +24,8 @@ class StatsAggregatorTest {
         assertNull(link.rttMs)
         assertNull(link.lossPct)
         assertFalse(link.isMeasured)
-        assertEquals(0L, snap.aggregatedBps)
+        assertEquals(0L, snap.aggregatedRxBps)
+        assertEquals(0L, snap.aggregatedTxBps)
         assertFalse(snap.isMeasured)
     }
 
@@ -64,7 +65,8 @@ class StatsAggregatorTest {
         assertEquals(0.5, link.lossPct)
         assertTrue(link.active)
         assertTrue(link.isMeasured)
-        assertEquals(3_000L, snap.aggregatedBps)
+        assertEquals(1_000L, snap.aggregatedRxBps)
+        assertEquals(2_000L, snap.aggregatedTxBps)
         assertTrue(snap.isMeasured)
     }
 
@@ -77,8 +79,9 @@ class StatsAggregatorTest {
             )
         )
         assertFalse(snap.isMeasured)
-        // aggregate is the sum over MEASURED links only
-        assertEquals(200L, snap.aggregatedBps)
+        // aggregate is the sum over MEASURED links only; rx and tx tracked separately
+        assertEquals(100L, snap.aggregatedRxBps)
+        assertEquals(100L, snap.aggregatedTxBps)
         assertTrue(snap.links.first { it.linkId == "wifi" }.isMeasured)
         assertFalse(snap.links.first { it.linkId == "mobile" }.isMeasured)
     }
@@ -87,7 +90,8 @@ class StatsAggregatorTest {
     fun `empty input is unmeasured`() {
         val snap = StatsAggregator.aggregate(emptyList())
         assertTrue(snap.links.isEmpty())
-        assertEquals(0L, snap.aggregatedBps)
+        assertEquals(0L, snap.aggregatedRxBps)
+        assertEquals(0L, snap.aggregatedTxBps)
         assertFalse(snap.isMeasured)
     }
 

@@ -33,7 +33,8 @@ interface BondingEngine {
 data class BondingConfig(
     val serverAddress: String,
     val keyRef: String,
-    val scheduler: Scheduler = Scheduler.WLB,
+    /** Null = automatic selection by [SchedulerPolicy]; WLB or MIN_RTT pins a specific scheduler. */
+    val scheduler: Scheduler? = null,
     val reorderBuffer: Boolean = true,
 )
 
@@ -67,7 +68,8 @@ data class LinkStats(
 /** Aggregated view across all links at one point in time. */
 data class BondingSnapshot(
     val links: List<LinkStats>,
-    val aggregatedBps: Long,
+    val aggregatedRxBps: Long,
+    val aggregatedTxBps: Long,
     val isMeasured: Boolean,
     val failoverActive: Boolean,
 )

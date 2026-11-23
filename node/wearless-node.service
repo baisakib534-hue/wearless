@@ -10,6 +10,12 @@ Type=simple
 User=wearless-node
 Group=wearless-node
 LoadCredential=node-config:/etc/wearless/node.conf
+# Always restart the node process when it exits, even with a clean exit code.
+# `Restart=on-failure` left the node dead (no tunnel) if mqvpn exited 0 —
+# which happens on a benign config reload or a clean shutdown by the daemon.
+# The burst limit (StartLimitIntervalSec/StartLimitBurst above) still
+# protects against a genuinely broken config (see those keys), and a real
+# failure still lands in `failed` state.
 ExecStart=/bin/sh -c 'exec /usr/local/bin/mqvpn --mode server --config "$CREDENTIALS_DIRECTORY/node-config"'
 Restart=always
 RestartSec=5s
@@ -28,6 +34,10 @@ RestrictRealtime=true
 DeviceAllow=/dev/net/tun rw
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+# On failure the unit enters "failed" and stays there (StartLimit still applies).
+# Inspect the reason with: journalctl -u wearless-node.service -n 50 --no-pager
+# A bad config therefore fails LOUDLY (visible in systemctl status) instead of
+# crash-looping silently; fix the config and `systemctl restart wearless-node`.
 
 [Install]
 WantedBy=multi-user.target

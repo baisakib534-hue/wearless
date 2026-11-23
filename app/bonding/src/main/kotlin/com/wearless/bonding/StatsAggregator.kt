@@ -65,14 +65,13 @@ object StatsAggregator {
             }
         }
         val anyMeasured = links.any { it.isMeasured }
-        // Aggregated rate only exists if at least one link is measured; and it is
-        // only the SUM of measured links — a partial sum over measured links is
-        // still the honest number for "what we can see", flagged by snapshot-level
-        // isMeasured=false when any link is unmeasured so the UI can label it.
-        val aggregatedBps = if (anyMeasured) links.filter { it.isMeasured }.sumOf { it.rxBps + it.txBps } else 0
+        // Split rx/tx aggregation; never double-count. Zero when nothing is measured.
+        val aggregatedRxBps = if (anyMeasured) links.filter { it.isMeasured }.sumOf { it.rxBps } else 0L
+        val aggregatedTxBps = if (anyMeasured) links.filter { it.isMeasured }.sumOf { it.txBps } else 0L
         return BondingSnapshot(
             links = links,
-            aggregatedBps = aggregatedBps,
+            aggregatedRxBps = aggregatedRxBps,
+            aggregatedTxBps = aggregatedTxBps,
             isMeasured = links.isNotEmpty() && links.all { it.isMeasured },
             failoverActive = failoverActive,
         )

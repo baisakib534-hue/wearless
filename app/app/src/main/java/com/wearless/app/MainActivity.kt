@@ -82,6 +82,12 @@ class MainActivity : AppCompatActivity() {
     private fun startTunnelWithConsent() {
         if (!NodeConfigStore.isConfigured(this)) {
             statusText.text = getString(R.string.status_no_node)
+            // Show transient feedback so the user knows the tap did something.
+            android.widget.Toast.makeText(
+                this,
+                getString(R.string.status_no_node),
+                android.widget.Toast.LENGTH_LONG
+            ).show()
             return
         }
         val prepare = VpnService.prepare(this)
@@ -127,8 +133,8 @@ class MainActivity : AppCompatActivity() {
                 // Real speeds come only from the engine's snapshot. Until the
                 // engine is wired and measured, display the literal string.
                 val snap = BondingBridge.snapshot(AndroidLinkHandle.toAppLinks(links))
-                speedText.text = if (snap.isMeasured && snap.aggregatedBps != null) {
-                    formatBps(snap.aggregatedBps)
+                speedText.text = if (snap.isMeasured && snap.aggregatedRxBps != null) {
+                    formatBps(snap.aggregatedRxBps)
                 } else {
                     getString(R.string.not_measured)
                 }
@@ -183,10 +189,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun formatBps(bps: Long): String =
+        // Use 1000-based units consistently (1 kbps = 1000 bps, 1 Mbps = 1,000,000 bps).
         if (bps >= 1_000_000) "%.1f Mbps".format(bps / 1_000_000.0)
         else "%.0f kbps".format(bps / 1_000.0)
 
     private fun formatBytes(b: Long): String =
+        // Use 1000-based units consistently (1 kB = 1000 bytes, 1 MB = 1,000,000 bytes).
         if (b >= 1_000_000_000) "%.2f GB".format(b / 1_000_000_000.0)
         else "%.1f MB".format(b / 1_000_000.0)
 }

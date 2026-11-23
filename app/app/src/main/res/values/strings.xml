@@ -15,7 +15,7 @@
     <string name="section_links">Links</string>
     <string name="no_links_hint">No links detected yet.</string>
     <string name="status_stopped">Stopped</string>
-    <string name="speed_caption">Combined download speed (hero metric)</string>
+    <string name="speed_caption">Combined speed</string>
     <!-- Honesty rule: unmeasured values render this literal, never a number. -->
     <string name="not_measured">NOT MEASURED</string>
 

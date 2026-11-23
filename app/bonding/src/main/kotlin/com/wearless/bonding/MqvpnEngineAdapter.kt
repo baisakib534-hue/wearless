@@ -79,8 +79,11 @@ class MqvpnEngineAdapter(
         if (links.isEmpty()) {
             return Result.failure(BondingError.InvalidConfig("no links to bond"))
         }
-        // No measured RTTs at prepare time (Phase-0 measurement does not exist yet):
-        // honour the explicit choice; the policy's adaptive path needs real RTTs.
+        // Resolve the scheduler. If [BondingConfig.scheduler] is null (default),
+        // [SchedulerPolicy.resolve] picks WLB or MinRTT adaptively. An explicit
+        // choice (WLB or MIN_RTT) is honoured as-is. Phase-0 RTT data does not
+        // exist yet, so the adaptive path currently returns WLB; once real
+        // per-link RTTs flow in, pass them via measuredRttMs.
         val scheduler = SchedulerPolicy.resolve(
             requested = config.scheduler,
             measuredRttMs = emptyMap(),

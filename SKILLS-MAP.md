@@ -30,7 +30,6 @@ Status legend: APPLIED = skill used on that work. PENDING = skill mapped, not ye
 - **Every worker brief MUST name the skills/plugins to use, written with a leading `/`**
   (for example: `/mobile-ui-standards`, `/code-refactor`, `/systematic-debugging`), so the
   worker loads and applies them. If a task needs no skill, say so explicitly.
-- A task that touches UI MUST run the UI/UX skills above before goose calls it done.
 - A task that produces code MUST be code-reviewed by codex and bug-hunted by claude before merge.
 - No fake data ever: any speed/RAM/battery number not measured is written NOT MEASURED.
 - Render is TEST-ONLY. The project is NOT built for Render; the node stays native/systemd.

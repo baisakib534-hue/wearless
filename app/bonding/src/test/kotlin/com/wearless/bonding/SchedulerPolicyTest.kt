@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 
 class SchedulerPolicyTest {
 
@@ -27,6 +28,23 @@ class SchedulerPolicyTest {
             Scheduler.MIN_RTT,
             SchedulerPolicy.resolve(Scheduler.MIN_RTT, emptyMap(), setOf("a", "b")),
         )
+    }
+
+    @Test
+    fun `auto mode (null requested) picks WLB when nothing measured`() {
+        // BondingConfig.scheduler defaults to null (auto). With no RTT data,
+        // the policy must resolve to WLB.
+        val config = BondingConfig(serverAddress = "vps:443", keyRef = "ref")
+        assertNull(config.scheduler)
+        val resolved = SchedulerPolicy.resolve(config.scheduler, emptyMap(), setOf("wifi", "mobile"))
+        assertEquals(Scheduler.WLB, resolved)
+    }
+
+    @Test
+    fun `auto mode (null requested) picks MinRTT on asymmetric links`() {
+        // With real RTT data showing strong asymmetry, auto mode picks MinRTT.
+        val rtts = mapOf("wifi" to 20L, "mobile" to 120L)
+        assertEquals(Scheduler.MIN_RTT, SchedulerPolicy.resolve(null, rtts, rtts.keys))
     }
 
     @Test
