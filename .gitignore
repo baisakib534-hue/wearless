@@ -1,0 +1,15 @@
+# local build outputs
+app/.gradle/
+app/build/
+app/**/build/
+app/local.properties
+*.apk
+*.aab
+
+# editor/OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# keep docs, node, scripts, qa under version control
