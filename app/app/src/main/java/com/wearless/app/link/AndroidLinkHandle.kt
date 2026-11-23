@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.net.VpnService
 import com.wearless.app.model.AppLink
 import java.net.Socket
 
@@ -21,7 +22,9 @@ class AndroidLinkHandle(
     val id: String,
     val kindValue: Int, // LinkKind ordinal in the bonding contract: 0=WIFI 1=MOBILE 2=NEARBY 3=NODE
     private val network: Network?,
-    val label: String
+    val label: String,
+    /** Optional VpnService used to protect sockets so they bypass the TUN. */
+    private val vpnService: VpnService? = null,
 ) {
     companion object {
         const val KIND_WIFI = 0
@@ -34,7 +37,19 @@ class AndroidLinkHandle(
          * alive by requesting them from ConnectivityManager. Returns one
          * handle per usable transport.
          */
-        fun discover(context: Context): List<AndroidLinkHandle> {
+        fun discover(context: Context): List<AndroidLinkHandle> =
+            discover(context, vpnService = context as? VpnService)
+
+        /**
+         * Discover the phone's own usable links (WiFi + cellular) and keep both
+         * alive by requesting them from ConnectivityManager. Returns one
+         * handle per usable transport.
+         *
+         * When [vpnService] is non-null, each link's sockets are passed through
+         * [VpnService.protect] so engine traffic bypasses the TUN (prevents
+         * routing loops).
+         */
+        fun discover(context: Context, vpnService: VpnService? = null): List<AndroidLinkHandle> {
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val out = ArrayList<AndroidLinkHandle>()
             var wifi: Network? = null
@@ -50,8 +65,8 @@ class AndroidLinkHandle(
                     cell = net
                 }
             }
-            wifi?.let { out.add(AndroidLinkHandle("wifi", KIND_WIFI, it, "WiFi")) }
-            cell?.let { out.add(AndroidLinkHandle("mobile", KIND_MOBILE, it, "Mobile data")) }
+            wifi?.let { out.add(AndroidLinkHandle("wifi", KIND_WIFI, it, "WiFi", vpnService)) }
+            cell?.let { out.add(AndroidLinkHandle("mobile", KIND_MOBILE, it, "Mobile data", vpnService)) }
             return out
         }
 
@@ -64,6 +79,9 @@ class AndroidLinkHandle(
         val n = network ?: return false
         return try {
             n.bindSocket(socket)
+            // Protect the socket from the TUN so it egresses via the physical link,
+            // not back into the tunnel (prevents routing loops).
+            vpnService?.protect(socket)
             true
         } catch (_: Exception) {
             false

@@ -71,6 +71,7 @@ object BondingBridge {
         serverAddress: String,
         keyRef: String,
         scheduler: Scheduler?,
+        reorderBuffer: Boolean,
         links: List<AndroidLinkHandle>
     ): Result<Unit> {
         val e = engine ?: DefaultBondingEngine().also { engine = it }
@@ -81,7 +82,7 @@ object BondingBridge {
             serverAddress = serverAddress,
             keyRef = keyRef,
             scheduler = scheduler,
-            reorderBuffer = true
+            reorderBuffer = reorderBuffer
         )
         val result = e.start(config, bondingLinks)
         state.value = if (result.isSuccess) State.Running

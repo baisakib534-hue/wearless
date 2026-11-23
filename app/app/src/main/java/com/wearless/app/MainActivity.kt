@@ -4,6 +4,8 @@ import android.content.Intent
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
@@ -88,6 +90,9 @@ class MainActivity : AppCompatActivity() {
             ).show()
             return
         }
+        // Request battery exemption once per user action so the watchdog can
+        // keep running under Doze. Safe to call repeatedly; the system dedupes.
+        requestBatteryExemption()
         val prepare = VpnService.prepare(this)
         if (prepare != null) {
             // VPN consent flow. Tunnel is NOT up until the user accepts.
@@ -116,6 +121,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Ask the user (once per start tap) to exempt the app from battery
+     * optimisation so the foreground watchdog survives Doze. No-op if already
+     * exempt or the intent cannot be resolved.
+     */
+    private fun requestBatteryExemption() {
+        val pm = getSystemService(POWER_SERVICE) as? PowerManager ?: return
+        if (pm.isIgnoringBatteryOptimizations(packageName)) return
+        try {
+            startActivity(
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = android.net.Uri.parse("package:$packageName")
+                }
+            )
+        } catch (_: Exception) {
+            // Some OEMs do not expose the dialog; ignore silently.
+        }
+    }
+
     private fun renderStopped() {
         statusText.text = getString(R.string.status_stopped)
         speedText.text = getString(R.string.not_measured)
@@ -131,8 +155,8 @@ class MainActivity : AppCompatActivity() {
                 // Real speeds come only from the engine's snapshot. Until the
                 // engine is wired and measured, display the literal string.
                 val snap = BondingBridge.snapshot(AndroidLinkHandle.toAppLinks(links))
-                speedText.text = if (snap.isMeasured && snap.aggregatedRxBps != null) {
-                    formatBps(snap.aggregatedRxBps)
+                speedText.text = if (snap.isMeasured) {
+                    formatBps(snap.aggregatedRxBps ?: 0L)
                 } else {
                     getString(R.string.not_measured)
                 }

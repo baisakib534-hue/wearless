@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import com.wearless.app.MainActivity
 import com.wearless.app.R
 import com.wearless.app.bonding.BondingBridge
+import com.wearless.bonding.Scheduler
 import com.wearless.app.link.AndroidLinkHandle
 import com.wearless.app.secure.NodeConfigStore
 import kotlinx.coroutines.CoroutineScope
@@ -102,7 +103,7 @@ class TunnelService : VpnService() {
             .setOngoing(true)
             .setContentIntent(pi)
             .build()
-        if (Build.VERSION.SDK_INT >= 34) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
                 NOTIFICATION_ID, notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
@@ -135,7 +136,15 @@ class TunnelService : VpnService() {
         }
 
         val links = AndroidLinkHandle.discover(this)
-        val result = BondingBridge.start(cfg.serverAddress, cfg.keyRef, null, links)
+        // Parse the persisted scheduler preference ("WLB", "MIN_RTT", or "auto"/null).
+        val scheduler = when (cfg.scheduler.uppercase()) {
+            "WLB" -> Scheduler.WLB
+            "MIN_RTT" -> Scheduler.MIN_RTT
+            else -> null // auto
+        }
+        val result = BondingBridge.start(
+            cfg.serverAddress, cfg.keyRef, scheduler, cfg.reorderBuffer, links
+        )
         engineStarted = result.isSuccess
 
         if (!engineStarted) {
@@ -162,6 +171,13 @@ class TunnelService : VpnService() {
             return
         }
         tunFd = iface
+
+        // Protect the TUN fd's underlying socket so engine traffic that egresses
+        // through this VpnService does not loop back into the TUN. The engine's
+        // own sockets are protected in AndroidLinkHandle.bindSocket; this call
+        // covers the fd itself as a belt-and-suspenders guard.
+        @Suppress("DEPRECATION")
+        protect(iface.fd)
 
         startWatchdog()
     }
