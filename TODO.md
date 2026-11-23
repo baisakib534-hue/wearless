@@ -11,7 +11,7 @@ Mirror of Orca run `run_0414b3280f3f` and `TOOLING-PLAN.md`. ✔️ = settled an
 ## Phase 1 — bonding core (prep that does not need T-08)
 - [x] ✔️ T-03 Android app shell in `app/**` (excluding `app/bonding/**`) — jcode · `ctx_d885eee65a5e` — assembleDebug SUCCESS, APK 6.5 MB, goose re-verified build; follow-up sent to wire :bonding into APK
 - [x] ✔️ T-04 Bonding core module in `app/bonding/**` — claude · `ctx_06bcf206021c` — 40/40 tests pass, verified by goose, committed
-- [ ] 🔄 T-05 Node wrapper + native systemd install in `node/**` — codex · `ctx_8be75dfe4b1e`
+- [x] ✔️ T-05 Node wrapper + native systemd install in `node/**` — codex · `ctx_8be75dfe4b1e` — 5 files, hardened unit, bash -n clean, verified by goose, committed
 - [ ] ⬜ T-07 Local packaging/CI scripts in `scripts/**` — codex (after T-05)
 
 ## Gate / close
