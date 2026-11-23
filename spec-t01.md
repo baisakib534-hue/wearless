@@ -1,0 +1,1 @@
+Task T-01 — Read all documents, write binding TOOLING-PLAN.md, TODO.md, initialise local git. Lead-only. Status: completed and goose-verified; committed as 8e95aaf. Recorded here so the Orca task board matches TODO.md.
