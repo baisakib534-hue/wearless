@@ -9,9 +9,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Debug
 import android.os.PowerManager
-import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -54,7 +54,7 @@ class ResourceMonitorActivity : AppCompatActivity() {
         batteryText = findViewById(R.id.batteryText)
         tempText = findViewById(R.id.tempText)
         perLinkText = findViewById(R.id.perLinkText)
-        findViewById<Button>(R.id.backButton).setOnClickListener { finish() }
+        findViewById<MaterialButton>(R.id.backButton).setOnClickListener { finish() }
     }
 
     override fun onResume() {

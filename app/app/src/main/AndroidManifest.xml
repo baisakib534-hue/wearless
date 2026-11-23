@@ -17,7 +17,7 @@
     <application
         android:label="Wearless"
         android:icon="@mipmap/ic_launcher"
-        android:theme="@style/Theme.Material3.DayNight.NoActionBar"
+        android:theme="@style/Theme.Wearless"
         android:allowBackup="false">
 
         <activity

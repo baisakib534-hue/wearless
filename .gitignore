@@ -13,3 +13,13 @@ Thumbs.db
 desktop.ini
 
 # keep docs, node, scripts, qa under version control
+
+# local orchestration/emulator helpers, logs, secrets
+.orca-*.cmd
+.orca-*.ps1
+.orca-*.log
+.orca-*.png
+.orca-*.xml
+.render-key
+.env
+*.render.env

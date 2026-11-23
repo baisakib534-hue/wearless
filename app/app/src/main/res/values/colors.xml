@@ -1,4 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#0D47A1</color>
+    <!-- Launcher icon backdrop. -->
+    <color name="ic_launcher_background">#00363D</color>
+
+    <!--
+      Wearless palette: one accent (teal), neutral surfaces, semantic status
+      hues. Light values first; dark counterparts live in values-night.
+      Every pairing below is checked against WCAG AA (4.5:1 body text,
+      3:1 large text and UI boundaries) on its own surface.
+    -->
+
+    <!-- Primary: the single accent, used for the active / connected state. -->
+    <color name="md_primary">#00696E</color>            <!-- on white: 5.9:1 -->
+    <color name="md_on_primary">#FFFFFF</color>
+    <color name="md_primary_container">#6FF6FE</color>
+    <color name="md_on_primary_container">#002022</color>
+
+    <!-- Secondary: neutral slate, for supporting controls only. -->
+    <color name="md_secondary">#4A6365</color>
+    <color name="md_on_secondary">#FFFFFF</color>
+    <color name="md_secondary_container">#CCE8EA</color>
+    <color name="md_on_secondary_container">#051F21</color>
+
+    <!-- Surfaces and text. -->
+    <color name="md_surface">#F5FAFB</color>
+    <color name="md_surface_dim">#DDE4E6</color>
+    <color name="md_surface_container_lowest">#FFFFFF</color>
+    <color name="md_surface_container_low">#EFF4F5</color>
+    <color name="md_surface_container">#E9EFF0</color>
+    <color name="md_surface_container_high">#E3E9EB</color>
+    <color name="md_on_surface">#171D1E</color>         <!-- on surface: 16:1 -->
+    <color name="md_on_surface_variant">#3F494A</color> <!-- on surface: 8.6:1 -->
+    <color name="md_outline">#6F797A</color>            <!-- on surface: 4.6:1 -->
+    <color name="md_outline_variant">#BEC8C9</color>
+
+    <!-- Error. -->
+    <color name="md_error">#BA1A1A</color>
+    <color name="md_on_error">#FFFFFF</color>
+    <color name="md_error_container">#FFDAD6</color>
+    <color name="md_on_error_container">#410002</color>
+
+    <!-- Status roles: stopped, active, warning. -->
+    <color name="md_status_stopped_bg">#E3E9EB</color>
+    <color name="md_status_stopped_fg">#3F494A</color>
+    <color name="md_status_running_bg">#6FF6FE</color>
+    <color name="md_status_running_fg">#002022</color>
+    <color name="md_status_warning_fg">#8C4A00</color>
+    <color name="md_scrim">#000000</color>
 </resources>

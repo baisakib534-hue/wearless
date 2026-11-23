@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name (Wearless). -->
+    <string name="app_name">Wearless</string>
+
+    <!-- MainActivity strings. -->
+    <string name="action_start">Start</string>`n    <string name="action_node_config">Node Config</string>`n    <string name="action_resource_monitor">Resource Monitor</string>
+    <string name="action_stop">Stop</string>
+    <string name="status_no_node">No node configured — open Node Config first.</string>
+    <string name="status_waiting_vpn">Waiting for VPN permission…</string>
+    <string name="status_vpn_denied">VPN permission denied — tunnel is NOT up.</string>
+    <string name="status_bonding_n">Bonding %1$d links</string>
+    <string name="status_engine_not_wired">Engine not wired — tunnel NOT up</string>
+    <string name="status_failed">Failed: %1$s</string>
+    <string name="section_links">Links</string>
+    <string name="no_links_hint">No links detected yet.</string>
+    <string name="status_stopped">Stopped</string>
+    <string name="speed_caption">Combined download speed (hero metric)</string>
+    <!-- Honesty rule: unmeasured values render this literal, never a number. -->
+    <string name="not_measured">NOT MEASURED</string>
+
+    <!-- Content descriptions (accessibility; every interactive node has one). -->
+    <string name="cd_toolbar">Wearless top bar</string>
+    <string name="cd_hero_card">Connection status and combined speed</string>
+    <string name="cd_speed">Combined speed</string>
+    <string name="cd_toggle">Toggle tunnel</string>
+    <string name="cd_node_config">Open node config</string>
+    <string name="cd_resource_monitor">Open resource monitor</string>
+    <string name="cd_status">Connection status</string>
+
+    <!-- Node config strings. -->
+    <string name="title_node_config">Node Config</string>
+    <string name="node_config_explainer">Paste the node key once. It is stored encrypted (Android Keystore) and never shown again.</string>
+    <string name="hint_server_address">Node server address (host:port)</string>
+    <string name="hint_node_key">Node key (paste)</string>
+    <string name="qr_scan_label">QR scan: not wired</string>
+    <string name="action_save">Save</string>
+    <string name="cd_server_input">Node server address</string>
+    <string name="cd_key_input">Node key</string>
+    <string name="cd_save">Save node configuration</string>
+
+    <!-- Resource monitor strings. -->
+    <string name="title_resource_monitor">Resource Monitor</string>
+    <string name="val_unavailable">unavailable</string>
+    <string name="action_back">Back</string>
+    <string name="cd_back">Go back</string>
+    <string name="cd_metrics_card">Live resource metrics</string>
+    <string name="cd_ram">App RAM</string>
+    <string name="cd_cpu">CPU usage</string>
+    <string name="cd_battery">Battery</string>
+    <string name="cd_temperature">Device temperature</string>
+    <string name="cd_per_link">Per-link data</string>
+
+    <!-- Per-link card strings. -->
+    <string name="link_speed">Speed</string>
+    <string name="link_data">Data used</string>
+    <string name="link_on">on</string>
+    <string name="link_off">off</string>
+</resources>

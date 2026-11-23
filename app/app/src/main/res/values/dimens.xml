@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Typography, spacing, and touch-target tokens on the 8dp grid. Touch
+      targets are >= 48dp everywhere (WCAG 2.1 AA 2.5.5 / Android a11y).
+    -->
+    <dimen name="space_1">4dp</dimen>
+    <dimen name="space_2">8dp</dimen>
+    <dimen name="space_3">16dp</dimen>
+    <dimen name="space_4">24dp</dimen>
+    <dimen name="space_5">32dp</dimen>
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="card_radius">16dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+</resources>

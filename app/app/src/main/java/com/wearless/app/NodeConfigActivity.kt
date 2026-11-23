@@ -1,11 +1,9 @@
 package com.wearless.app
 
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
 import com.wearless.app.secure.NodeConfigStore
 
 /**
@@ -22,10 +20,10 @@ class NodeConfigActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_node_config)
 
-        val serverInput = findViewById<EditText>(R.id.serverInput)
-        val keyInput = findViewById<EditText>(R.id.keyInput)
-        val saveButton = findViewById<Button>(R.id.saveButton)
-        val qrInfo = findViewById<TextView>(R.id.qrInfo)
+        val serverInput = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.serverInput)
+        val keyInput = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.keyInput)
+        val saveButton = findViewById<MaterialButton>(R.id.saveButton)
+        val qrInfo = findViewById<android.widget.TextView>(R.id.qrInfo)
         val qrHook = com.wearless.app.qr.QrScanHook
 
         qrInfo.text = qrHook.availabilityMessage()

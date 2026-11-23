@@ -4,10 +4,13 @@ import android.content.Intent
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
-import android.widget.Button
+import android.view.LayoutInflater
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.wearless.app.bonding.BondingBridge
 import com.wearless.app.link.AndroidLinkHandle
 import com.wearless.app.model.AppLink
@@ -17,25 +20,39 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/**
+ * Home screen. Material 3 layout (top app bar + hero status/speed card +
+ * per-link cards + outlined secondary actions).
+ *
+ * Honesty rules kept intact:
+ * - Unmeasured values render the literal "NOT MEASURED" — never a number.
+ * - Start/stop and VPN consent still drive the real TunnelService; no fake
+ *   success is shown.
+ * - The hero speed number is announced once (accessibilityLiveRegion polite),
+ *   never spammed.
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var statusText: TextView
     private lateinit var speedText: TextView
-    private lateinit var toggleButton: Button
+    private lateinit var toggleButton: MaterialButton
     private lateinit var linksContainer: LinearLayout
+    private lateinit var linksEmptyText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         statusText = findViewById(R.id.statusText)
         speedText = findViewById(R.id.speedText)
         toggleButton = findViewById(R.id.toggleButton)
         linksContainer = findViewById(R.id.linksContainer)
+        linksEmptyText = findViewById(R.id.linksEmptyText)
 
-        findViewById<Button>(R.id.nodeConfigButton).setOnClickListener {
+        findViewById<MaterialButton>(R.id.nodeConfigButton).setOnClickListener {
             startActivity(Intent(this, NodeConfigActivity::class.java))
         }
-        findViewById<Button>(R.id.resourceMonitorButton).setOnClickListener {
+        findViewById<MaterialButton>(R.id.resourceMonitorButton).setOnClickListener {
             startActivity(Intent(this, ResourceMonitorActivity::class.java))
         }
 
@@ -64,14 +81,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun startTunnelWithConsent() {
         if (!NodeConfigStore.isConfigured(this)) {
-            statusText.text = "No node configured — open Node Config first."
+            statusText.text = getString(R.string.status_no_node)
             return
         }
         val prepare = VpnService.prepare(this)
         if (prepare != null) {
             // VPN consent flow. Tunnel is NOT up until the user accepts.
             startActivityForResult(prepare, 100)
-            statusText.text = "Waiting for VPN permission…"
+            statusText.text = getString(R.string.status_waiting_vpn)
         } else {
             launchTunnelService()
         }
@@ -81,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 100) {
             if (resultCode == RESULT_OK) launchTunnelService()
-            else statusText.text = "VPN permission denied — tunnel is NOT up."
+            else statusText.text = getString(R.string.status_vpn_denied)
         }
     }
 
@@ -96,8 +113,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderStopped() {
-        statusText.text = "Stopped"
-        speedText.text = "NOT MEASURED"
+        statusText.text = getString(R.string.status_stopped)
+        speedText.text = getString(R.string.not_measured)
         renderLinks(AndroidLinkHandle.discover(this).map { AppLink(it.id, it.label, it.kindValue) })
     }
 
@@ -105,34 +122,38 @@ class MainActivity : AppCompatActivity() {
         when (val s = BondingBridge.state.value) {
             is BondingBridge.State.Running -> {
                 val links = AndroidLinkHandle.discover(this)
-                statusText.text = "Bonding ${links.size} links"
-                toggleButton.text = "Stop"
+                statusText.text = getString(R.string.status_bonding_n, links.size)
+                toggleButton.text = getString(R.string.action_stop)
                 // Real speeds come only from the engine's snapshot. Until the
                 // engine is wired and measured, display the literal string.
                 val snap = BondingBridge.snapshot(AndroidLinkHandle.toAppLinks(links))
                 speedText.text = if (snap.isMeasured && snap.aggregatedBps != null) {
                     formatBps(snap.aggregatedBps)
                 } else {
-                    "NOT MEASURED"
+                    getString(R.string.not_measured)
                 }
                 renderLinks(AndroidLinkHandle.toAppLinks(links))
             }
             is BondingBridge.State.EngineNotWired -> {
-                statusText.text = "Engine not wired — tunnel NOT up"
-                toggleButton.text = "Start"
-                speedText.text = "NOT MEASURED"
+                statusText.text = getString(R.string.status_engine_not_wired)
+                toggleButton.text = getString(R.string.action_start)
+                speedText.text = getString(R.string.not_measured)
                 renderLinks(AndroidLinkHandle.toAppLinks(AndroidLinkHandle.discover(this)))
             }
             is BondingBridge.State.Failed -> {
-                statusText.text = "Failed: ${s.message}"
-                toggleButton.text = "Start"
-                speedText.text = "NOT MEASURED"
+                statusText.text = getString(R.string.status_failed, s.message)
+                toggleButton.text = getString(R.string.action_start)
+                speedText.text = getString(R.string.not_measured)
                 renderLinks(AndroidLinkHandle.toAppLinks(AndroidLinkHandle.discover(this)))
             }
             is BondingBridge.State.Stopped -> {
-                statusText.text = if (NodeConfigStore.isConfigured(this)) "Stopped" else "No node configured"
-                toggleButton.text = "Start"
-                speedText.text = "NOT MEASURED"
+                statusText.text = if (NodeConfigStore.isConfigured(this)) {
+                    getString(R.string.status_stopped)
+                } else {
+                    getString(R.string.status_no_node)
+                }
+                toggleButton.text = getString(R.string.action_start)
+                speedText.text = getString(R.string.not_measured)
                 renderLinks(AndroidLinkHandle.toAppLinks(AndroidLinkHandle.discover(this)))
             }
         }
@@ -141,20 +162,23 @@ class MainActivity : AppCompatActivity() {
     private fun renderLinks(links: List<AppLink>) {
         linksContainer.removeAllViews()
         if (links.isEmpty()) {
-            val tv = TextView(this)
-            tv.text = "No usable links found (WiFi / mobile data)."
-            tv.setPadding(0, 16, 0, 16)
-            linksContainer.addView(tv)
+            linksEmptyText.visibility = View.VISIBLE
             return
         }
+        linksEmptyText.visibility = View.GONE
+        val inflater = LayoutInflater.from(this)
         for (link in links) {
-            val tv = TextView(this)
-            val speed = if (link.isMeasured && link.rxBps != null) formatBps(link.rxBps) else "NOT MEASURED"
-            val data = if (link.isMeasured && link.rxBytes != null) formatBytes(link.rxBytes) else "NOT MEASURED"
-            tv.text = "${link.label}  ${if (link.active) "on" else "off"}\n" +
-                "speed: $speed   data: $data"
-            tv.setPadding(0, 16, 0, 16)
-            linksContainer.addView(tv)
+            val card = inflater.inflate(R.layout.item_link_card, linksContainer, false) as MaterialCardView
+            card.contentDescription = "${link.label} link"
+            val name = card.findViewById<TextView>(R.id.linkNameText)
+            val state = card.findViewById<TextView>(R.id.linkStateText)
+            val speed = card.findViewById<TextView>(R.id.linkSpeedText)
+            val data = card.findViewById<TextView>(R.id.linkDataText)
+            name.text = link.label
+            state.text = getString(if (link.active) R.string.link_on else R.string.link_off)
+            speed.text = if (link.isMeasured && link.rxBps != null) formatBps(link.rxBps) else getString(R.string.not_measured)
+            data.text = if (link.isMeasured && link.rxBytes != null) formatBytes(link.rxBytes) else getString(R.string.not_measured)
+            linksContainer.addView(card)
         }
     }
 
