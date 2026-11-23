@@ -1,0 +1,23 @@
+# TEST-ONLY Render descriptor for the Wearless node wrapper.
+#
+# This is NOT the production deployment path and it does not change the node
+# design. The real node runs NATIVE under systemd on a Linux VPS (see node/).
+# This file exists only so the node wrapper can be smoke-tested on Render with
+# the owner's test key. No secret is stored here: the Render API key lives in
+# the Render environment / the local gitignored .render-key file only.
+#
+# It builds the node wrapper into a tiny Linux container and serves a health
+# endpoint that reports the real result of the node smoke checks.
+services:
+  - type: web
+    name: wearless-node-test
+    runtime: docker
+    plan: free
+    dockerfilePath: render-test/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: test
+      - key: WEARLESS_TEST_MODE
+        value: "1"

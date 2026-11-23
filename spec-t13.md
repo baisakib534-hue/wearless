@@ -53,6 +53,16 @@ ANDROID UI / LIFECYCLE (app/app/**)
 14. LOW — `ResourceMonitorActivity` poller can leak across rapid resume/pause. Cancel before relaunching,
     ideally with lifecycleScope.
 
+UI/UX findings from goose's real emulator test (see qa/UIUX-REVIEW.md):
+15. MEDIUM (U1) — Tapping Start with no node configured gives NO visible feedback: the status text is
+    identical before and after the tap. Add a Snackbar/inline message ("Configure a node first").
+16. LOW (U2) — `item_link_card.xml` `linkStateText` chip is only 17 px wide at mdpi; give it padding/minWidth
+    and verify at 1.3x font scale that "off"/"on" is not clipped.
+17. LOW (U3) — the hero caption "Combined download speed (hero metric)" is developer-speak; use
+    owner-facing wording ("Combined speed") in strings.xml.
+18. LOW (U4) — ResourceMonitorActivity should carry one short honest footnote explaining that per-link
+    data needs the bonding engine and that some sensors need a real device (it already says "unavailable").
+
 BUILD
 15. MEDIUM — the ROOT settings.gradle.kts / gradlew conflict with the real layout (bonding lives at
     app/bonding, and the real build root is app/). Make a clean-machine build unambiguous: either remove
