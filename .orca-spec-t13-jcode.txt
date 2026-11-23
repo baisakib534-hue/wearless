@@ -1,0 +1,26 @@
+You are jcode, the Android implementation seat. Task: T-13 (re-dispatch after failed terminal). Fix ALL CRITICAL and HIGH findings from qa/CODEX-REVIEW.md and qa/CLAUDE-BUGHUNT.md in the app code (app/** only; do not touch node/** or scripts/**).
+
+Critical app findings to fix (from qa/CODEX-REVIEW.md):
+1. app/app/src/main/java/com/wearless/app/vpn/TunnelService.kt:120 — hold the ParcelFileDescriptor from Builder().establish() in a field; call VpnService.protect() on every engine socket (or addDisallowedApplication); add explicit MTU; close fd in stopTunnel().
+2. TunnelService.kt:97 — make startTunnel() idempotent: return early when session/fd exists; single watchdog job; tear down old TUN before re-establishing.
+3. TunnelService.kt:115 — BondingBridge.start must load full BondingConfig from NodeConfigStore and pass scheduler/reorderBuffer (not hardcoded true).
+4. TunnelService.kt:137 — watchdog: exponential backoff with cap, terminal Failed state after N attempts, request battery exemption once per user action.
+5. app/app/src/main/java/com/wearless/app/MainActivity.kt:64 — drive UI only from BondingBridge.state; remove optimistic renderStopped().
+
+High/medium app findings to fix:
+- StatsAggregator.kt:72 — aggregatedBps single named direction (rx) and zero when isMeasured false.
+- MqvpnEngineAdapter.kt:98 — validate keyRef token shape at prepare time, fail InvalidConfig.
+- MqvpnEngineAdapter.kt:105 — replace String.split(" ") with explicit List<String> constants.
+- MqvpnEngineAdapter.kt:140 — notMeasuredSnapshot active = false (or real LinkHandle state).
+- FailoverMachine.kt:59 — allow explicit recover()/restart transition.
+- MainActivity.kt:130 — drop dead null check on aggregatedBps; rely on isMeasured.
+- MainActivity.kt:110 — use lifecycle-scoped scope, cancel on destroy.
+- TunnelService.kt:87 — use Build.VERSION_CODES.UPSIDE_DOWN_CAKE.
+
+Files you own: app/** (including app/bonding/**). Do NOT touch node/**, scripts/**, docs, or qa evidence.
+
+Skills to use: /mobile-ui-standards, /code-refactor, /systematic-debugging, /development-standards.
+
+Evidence required in worker_done: git diff summary, assembleDebug output, :bonding:test output, list of findings fixed with file:line.
+
+Finish with a worker_done report containing your evidence (diff summary, command output, test/measurement output, file paths). If you hit an error you cannot fix, escalate through orchestration with the EXACT error before stopping. Stopping silently is forbidden.

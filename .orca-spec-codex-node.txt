@@ -1,0 +1,17 @@
+You are codex, the node implementation / review seat. Task: fix node-side findings from qa/CODEX-REVIEW.md in node/** only.
+
+Findings to fix:
+1. node/install.sh:151 — iptables fallback branch inserts INPUT ACCEPT rules but never persists. After inserting, persist via netfilter-persistent save if available, else write a small oneshot unit that restores the rules, and fail the install when no persistence path exists.
+2. node/wearless-node.service:13 — ExecStart passes unverified flags to /usr/local/bin/mqvpn. Verify server invocation against pinned mqvpn build; add ExecStartPre check (or --version/--help probe) so a bad binary fails install loudly.
+3. node/control.sh:50 — check_response() only detects literal "ok": false. Also treat missing "ok":true, an error key, or empty response as failure.
+4. node/control.sh:4 — allow WEARLESS_CONTROL_HOST/WEARLESS_CONTROL_PORT env overrides (like stats.sh).
+5. node/install.sh:128 — replace sentinel string comparison ("TO VERIFY — official release URL" with em dash) with a separate MQVPN_URL_SET flag or empty default.
+6. node/wearless-node.service:20 — add ProtectProc=invisible, RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK, SystemCallFilter=@system-service.
+
+Files you own: node/** only. Do not touch app/**, scripts/**, docs, qa.
+
+Skills to use: /development-standards, /bug-diagnosis.
+
+Evidence required in worker_done: git diff summary, bash -n output for all node/*.sh, unit file shown.
+
+Finish with a worker_done report containing your evidence (diff summary, command output, test/measurement output, file paths). If you hit an error you cannot fix, escalate through orchestration with the EXACT error before stopping. Stopping silently is forbidden.

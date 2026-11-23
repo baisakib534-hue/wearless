@@ -1,0 +1,15 @@
+You are grok, a build/CI seat teammate. Task: build verification + Render smoke test (test-only) of the Wearless node.
+
+Scope: scripts/** and qa/** only. Do NOT touch app/**, node/** implementation, docs root.
+
+Work:
+1. Run scripts/verify-local.sh and capture output; fix any failures in scripts/ (not in app/node source).
+2. Run scripts/render-smoke.sh if present and capture output; document Render test-only deploy steps (key as env var, never committed) in qa/RENDER-SMOKE.md.
+3. Confirm no secrets/keys in tracked files (grep for obvious patterns) and report.
+4. Produce qa/BUILD-REPORT.md with: verify-local output, render-smoke output, secret-scan result, APK path/size if present.
+
+Skills to use: /development-standards, /bug-diagnosis.
+
+Evidence required in worker_done: command outputs, file paths.
+
+Finish with a worker_done report containing your evidence (diff summary, command output, test/measurement output, file paths). If you hit an error you cannot fix, escalate through orchestration with the EXACT error before stopping. Stopping silently is forbidden.

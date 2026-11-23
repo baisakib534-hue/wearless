@@ -64,6 +64,17 @@ class FailoverMachine(private val linkIds: Set<String>) {
         return state
     }
 
+    /**
+     * Explicitly recover from [ALL_LINKS_LOST] when all links return.
+     * Transitions to [RUNNING] if all links are up, [FAILOVER] otherwise.
+     * Called by the platform layer when it detects recovery; not automatic.
+     */
+    fun recover(): State {
+        check(state == State.ALL_LINKS_LOST) { "recover() only valid from ALL_LINKS_LOST (was $state)" }
+        state = if (upLinks.size == linkIds.size) State.RUNNING else State.FAILOVER
+        return state
+    }
+
     fun onLinkDown(linkId: String): State {
         if (linkId !in linkIds) return state
         val wasRunning = state == State.RUNNING

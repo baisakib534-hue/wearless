@@ -52,6 +52,12 @@ object SchedulerPolicy {
      * WLB under jitter recovered only with the reorder buffer [A4]; it is safe with
      * MinRTT too (mqvpn ships it as a general option [A3]) so we keep it on unless
      * the caller explicitly disabled it in [BondingConfig].
+     *
+     * Both schedulers currently benefit; the parameter is kept so a future
+     * scheduler (or a MinRTT low-latency mode) can opt out without an API change.
      */
-    fun reorderBufferRecommended(@Suppress("UNUSED_PARAMETER") scheduler: Scheduler): Boolean = true
+    fun reorderBufferRecommended(scheduler: Scheduler): Boolean = when (scheduler) {
+        Scheduler.WLB -> true
+        Scheduler.MIN_RTT -> true
+    }
 }

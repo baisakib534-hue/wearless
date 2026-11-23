@@ -42,12 +42,18 @@ class MqvpnEngineAdapter(
     object MqvpnFlags {
         const val SERVER = "--server"
         const val MODE_HYBRID = "--tcp-relay hybrid"
+        val MODE_HYBRID_LIST = listOf("--tcp-relay", "hybrid")
         const val SCHEDULER_WLB = "--scheduler wlb"
+        val SCHEDULER_WLB_LIST = listOf("--scheduler", "wlb")
         const val SCHEDULER_MIN_RTT = "--scheduler minrtt"
+        val SCHEDULER_MIN_RTT_LIST = listOf("--scheduler", "minrtt")
         const val REORDER_BUFFER_ON = "--reorder-buffer"
+        val REORDER_BUFFER_ON_LIST = listOf("--reorder-buffer")
         const val REORDER_BUFFER_OFF = "--no-reorder-buffer"
+        val REORDER_BUFFER_OFF_LIST = listOf("--no-reorder-buffer")
         const val KEY_FILE = "--key-file"
         const val BIND_INTERFACE = "--bind-interface"
+        val BIND_INTERFACE_LIST = listOf("--bind-interface")
     }
 
     /** Prepared (but not started) mqvpn session description. Pure data; launching is the platform layer's job. */
@@ -76,6 +82,9 @@ class MqvpnEngineAdapter(
         if (config.keyRef.isBlank()) {
             return Result.failure(BondingError.InvalidConfig("keyRef is blank (no key reference in secure storage)"))
         }
+        if (!config.keyRef.startsWith("ref:") && !config.keyRef.startsWith("keystore:")) {
+            return Result.failure(BondingError.InvalidConfig("keyRef must be a reference token (ref:... or keystore:...), not raw key material"))
+        }
         if (links.isEmpty()) {
             return Result.failure(BondingError.InvalidConfig("no links to bond"))
         }
@@ -99,14 +108,14 @@ class MqvpnEngineAdapter(
         // key file path/contents at launch. We only pass the reference token
         // through so it can be substituted; no key material ever lives here.
         argv += listOf(MqvpnFlags.KEY_FILE, "\${keyRef:${config.keyRef}}")
-        argv += MqvpnFlags.MODE_HYBRID.split(" ")
+        argv += MqvpnFlags.MODE_HYBRID_LIST
         argv += when (scheduler) {
-            Scheduler.WLB -> MqvpnFlags.SCHEDULER_WLB.split(" ")
-            Scheduler.MIN_RTT -> MqvpnFlags.SCHEDULER_MIN_RTT.split(" ")
+            Scheduler.WLB -> MqvpnFlags.SCHEDULER_WLB_LIST
+            Scheduler.MIN_RTT -> MqvpnFlags.SCHEDULER_MIN_RTT_LIST
         }
-        argv += if (reorder) MqvpnFlags.REORDER_BUFFER_ON.split(" ") else MqvpnFlags.REORDER_BUFFER_OFF.split(" ")
+        argv += if (reorder) MqvpnFlags.REORDER_BUFFER_ON_LIST else MqvpnFlags.REORDER_BUFFER_OFF_LIST
         for (link in links) {
-            argv += MqvpnFlags.BIND_INTERFACE.split(" ") + link.id
+            argv += MqvpnFlags.BIND_INTERFACE_LIST + link.id
         }
 
         val configDoc = buildString {
@@ -140,7 +149,7 @@ class MqvpnEngineAdapter(
     fun notMeasuredSnapshot(links: List<LinkHandle>, failoverActive: Boolean = false): BondingSnapshot =
         StatsAggregator.aggregate(
             counters = links.map {
-                StatsAggregator.RawLinkCounters(linkId = it.id, active = true, isMeasured = false)
+                StatsAggregator.RawLinkCounters(linkId = it.id, active = false, isMeasured = false)
             },
             failoverActive = failoverActive,
         )

@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.wearless.app.bonding.BondingBridge
@@ -16,8 +17,6 @@ import com.wearless.app.link.AndroidLinkHandle
 import com.wearless.app.model.AppLink
 import com.wearless.app.secure.NodeConfigStore
 import com.wearless.app.vpn.TunnelService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -61,7 +60,6 @@ class MainActivity : AppCompatActivity() {
                 stopService(Intent(this, TunnelService::class.java).apply {
                     action = TunnelService.ACTION_STOP
                 })
-                renderStopped()
             } else {
                 startTunnelWithConsent()
             }
@@ -113,7 +111,7 @@ class MainActivity : AppCompatActivity() {
             action = TunnelService.ACTION_START
         })
         // Render immediately; the service sets the real state. No fake success.
-        CoroutineScope(Dispatchers.Main).launch {
+        lifecycleScope.launch {
             renderState()
         }
     }
