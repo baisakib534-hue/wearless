@@ -34,7 +34,7 @@ class SchedulerPolicyTest {
     fun `auto mode (null requested) picks WLB when nothing measured`() {
         // BondingConfig.scheduler defaults to null (auto). With no RTT data,
         // the policy must resolve to WLB.
-        val config = BondingConfig(serverAddress = "vps:443", keyRef = "ref")
+        val config = BondingConfig(serverAddress = "vps:443", keyRef = "ref:ref")
         assertNull(config.scheduler)
         val resolved = SchedulerPolicy.resolve(config.scheduler, emptyMap(), setOf("wifi", "mobile"))
         assertEquals(Scheduler.WLB, resolved)

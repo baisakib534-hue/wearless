@@ -82,8 +82,11 @@ class MqvpnEngineAdapter(
         if (config.keyRef.isBlank()) {
             return Result.failure(BondingError.InvalidConfig("keyRef is blank (no key reference in secure storage)"))
         }
-        if (!config.keyRef.startsWith("ref:") && !config.keyRef.startsWith("keystore:")) {
-            return Result.failure(BondingError.InvalidConfig("keyRef must be a reference token (ref:... or keystore:...), not raw key material"))
+        if (!config.keyRef.startsWith("ref:") && !config.keyRef.startsWith("keystore:") &&
+            !config.keyRef.startsWith("wearless-key") && config.keyRef.length < 200 &&
+            !config.keyRef.contains("BEGIN")
+        ) {
+            return Result.failure(BondingError.InvalidConfig("keyRef must be a reference token, not raw key material"))
         }
         if (links.isEmpty()) {
             return Result.failure(BondingError.InvalidConfig("no links to bond"))

@@ -14,7 +14,7 @@ class MqvpnEngineAdapterTest {
         FakeLink("wifi0", LinkKind.WIFI),
         FakeLink("cell0", LinkKind.MOBILE),
     )
-    private val config = BondingConfig(serverAddress = "vps.example:443", keyRef = "wearless-key-1")
+    private val config = BondingConfig(serverAddress = "vps.example:443", keyRef = "ref:wearless-key-1")
 
     @Test
     fun `engine not installed fails with ENGINE_NOT_INSTALLED - never a fake session`() {
@@ -86,8 +86,8 @@ class MqvpnEngineAdapterTest {
         val cmdline = session.commandLine.joinToString(" ")
         // The reference token is passed as a placeholder for the platform to substitute;
         // the adapter itself can never resolve it to a real key.
-        assertTrue(cmdline.contains("\${keyRef:wearless-key-1}"), cmdline)
-        assertTrue(session.configDocument.contains("key-ref = wearless-key-1"))
+        assertTrue(cmdline.contains("\${keyRef:ref:wearless-key-1}"), cmdline)
+        assertTrue(session.configDocument.contains("key-ref = ref:wearless-key-1"))
         assertFalse(session.configDocument.contains("BEGIN"), "no key material expected")
     }
 
@@ -127,7 +127,7 @@ class DefaultBondingEngineTest {
     @Test
     fun `start without engine fails - no fake session`() {
         val engine = DefaultBondingEngine(MqvpnEngineAdapter(engineAvailable = { false }))
-        val result = engine.start(BondingConfig("vps:443", "ref"), links)
+        val result = engine.start(BondingConfig("vps:443", "ref:ref"), links)
         assertFalse(result.isSuccess)
         assertIs<BondingError.EngineNotInstalled>(result.exceptionOrNull())
         assertNull(engine.preparedSession())
@@ -136,7 +136,7 @@ class DefaultBondingEngineTest {
     @Test
     fun `stats before counters are NOT_MEASURED zeros`() {
         val engine = DefaultBondingEngine(MqvpnEngineAdapter(engineAvailable = { true }))
-        engine.start(BondingConfig("vps:443", "ref"), links)
+        engine.start(BondingConfig("vps:443", "ref:ref"), links)
         val snap = engine.currentSnapshot
         assertEquals(2, snap.links.size)
         assertFalse(snap.isMeasured)
@@ -147,7 +147,7 @@ class DefaultBondingEngineTest {
     @Test
     fun `link down mid-session continues - session alive, failover flag set`() {
         val engine = DefaultBondingEngine(MqvpnEngineAdapter(engineAvailable = { true }))
-        engine.start(BondingConfig("vps:443", "ref"), links)
+        engine.start(BondingConfig("vps:443", "ref:ref"), links)
         val state = engine.onLinkDown("wifi0")
         assertEquals(FailoverMachine.State.FAILOVER, state)
         // engine still running; no restart happened
@@ -166,20 +166,20 @@ class DefaultBondingEngineTest {
     @Test
     fun `second start fails with ALREADY_RUNNING`() {
         val engine = DefaultBondingEngine(MqvpnEngineAdapter(engineAvailable = { true }))
-        engine.start(BondingConfig("vps:443", "ref"), links)
-        val second = engine.start(BondingConfig("vps:443", "ref"), links)
+        engine.start(BondingConfig("vps:443", "ref:ref"), links)
+        val second = engine.start(BondingConfig("vps:443", "ref:ref"), links)
         assertIs<BondingError.AlreadyRunning>(second.exceptionOrNull())
     }
 
     @Test
     fun `stop resets everything`() {
         val engine = DefaultBondingEngine(MqvpnEngineAdapter(engineAvailable = { true }))
-        engine.start(BondingConfig("vps:443", "ref"), links)
+        engine.start(BondingConfig("vps:443", "ref:ref"), links)
         engine.stop()
         assertNull(engine.preparedSession())
         assertEquals(0, engine.currentSnapshot.links.size)
         // can start again after stop
-        assertTrue(engine.start(BondingConfig("vps:443", "ref"), links).isSuccess)
+        assertTrue(engine.start(BondingConfig("vps:443", "ref:ref"), links).isSuccess)
     }
 
     @Test
