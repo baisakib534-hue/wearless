@@ -38,19 +38,26 @@ goose run 2026-11-23 19:06 (+03), from app/:
 > Task :bonding:test UP-TO-DATE
 BUILD SUCCESSFUL in 5s
 (exit code 0; earlier cold run also exit 0)
+
+goose re-verify after :bonding wiring (commit 8bacb6c), 19:30 (+03):
+> gradlew.bat :app:assembleDebug --console=plain -q  → exit 0
+> gradlew.bat :app:packageDebug --console=plain      → BUILD SUCCESSFUL in 4s
+APK dex scan: Lcom/wearless/bonding/BondingEngine; and
+Lcom/wearless/bonding/DefaultBondingEngine; present (classes5.dex / classes9.dex)
 ```
 
 ### PASTE APK PATH + SIZE HERE
 
 ```
-app/app/build/outputs/apk/debug/app-debug.apk — 6,544,610 bytes (6.5 MB)
-(jcode first build; APK verified present by goose)
+app/app/build/outputs/apk/debug/app-debug.apk
+- first build (T-03 close): 6,544,610 bytes (6.5 MB)
+- after :bonding packaged (commit 8bacb6c): 6,571,485 bytes (6.57 MB)
 ```
 
-Verified: **PARTIAL** — build output and APK are real and pasted. Note: APK in this
-build does NOT yet package :bonding (no implementation(project(":bonding")) in
-app/app/build.gradle.kts at T-03 close); jcode follow-up dispatched to wire it in
-(msg_c800f6bcfc11). Flip to YES after that build is verified. (flips to YES only when real output + APK path pasted above).
+Verified: **YES** — build output real and pasted; APK real; :bonding classes
+confirmed inside the APK dex files by goose after jcode's wiring (commit 8bacb6c:
+implementation(project(":bonding")) + BondingBridge now imports the contract types
+directly, no reflection). (flips to YES only when real output + APK path pasted above).
 
 ---
 
@@ -70,16 +77,25 @@ Expected: one `OK: <file>` line per script, no `SYNTAX FAIL` lines, and exit cod
 ### PASTE REAL OUTPUT HERE
 
 ```
-NOT CAPTURED
+NOT CAPTURED on Windows (no bash available locally).
+codex worker T-05 report (ctx_8be75dfe4b1e): install.sh bash -n exit=0,
+control.sh bash -n exit=0, stats.sh bash -n exit=0, control --help exit=0,
+git diff --check exit=0.
+goose manual review: POSIX sh (set -eu), quoting and traps consistent;
+independent local bash -n NOT POSSIBLE on this Windows box — re-run this
+command on the VPS (or any Linux shell) at install time before trusting it.
 ```
 
 ### Script inventory actually found in node/ (ls -1 node/*.sh)
 
 ```
-NOT CAPTURED
+node/control.sh
+node/install.sh
+node/stats.sh
 ```
 
-Verified: **NO**
+Verified: **PARTIAL** — codex-reported bash -n passes + goose source review;
+independent Linux-side bash -n still owed (no bash on the Windows build box).
 
 ---
 
