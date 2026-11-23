@@ -27,14 +27,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    // The bonding module (com.wearless.bonding, owned by claude) is compiled
-    // separately. To avoid redefining its contract types, the app accesses it
-    // through reflection only (see BondingBridge.kt). The :bonding project is
-    // referenced in settings.gradle.kts but no compile-time dependency is
-    // declared here on purpose.
+    // The bonding module (com.wearless.bonding, owned by claude) is wired in
+    // as a compile-time project dependency above; its contract types are
+    // consumed directly in BondingBridge.kt and never duplicated here.
 }
 
 dependencies {
+    implementation(project(":bonding"))
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")

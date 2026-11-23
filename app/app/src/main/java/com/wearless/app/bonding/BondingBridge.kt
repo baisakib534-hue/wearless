@@ -1,25 +1,30 @@
 package com.wearless.app.bonding
 
 import com.wearless.app.model.AppLink
-import java.lang.reflect.Proxy
+import com.wearless.bonding.BondingConfig
+import com.wearless.bonding.BondingEngine
+import com.wearless.bonding.BondingSnapshot
+import com.wearless.bonding.DefaultBondingEngine
+import com.wearless.bonding.LinkHandle
+import com.wearless.bonding.LinkKind
+import com.wearless.bonding.Scheduler
+import com.wearless.app.link.AndroidLinkHandle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Reflection bridge to claude-owned module com.wearless.bonding.
+ * Bridge to claude-owned module com.wearless.bonding (now packaged in the APK
+ * via implementation(project(":bonding"))).
  *
- * The bonding contract types (BondingEngine, BondingConfig, LinkHandle,
- * LinkKind, LinkStats, BondingSnapshot, Scheduler) are owned by claude and are
- * NOT redefined here. Until that module ships in the APK, this bridge reports
- * "engine not wired" and every measured value in the UI stays NOT MEASURED.
+ * The contract types are consumed directly here — never duplicated. The app
+ * side supplies AndroidLinkHandle implementations of the bonding LinkHandle
+ * interface (ConnectivityManager/Network.bindSocket per [B2]) and forwards
+ * start/stop/stats to a real DefaultBondingEngine.
  *
- * When com.wearless.bonding is on the classpath, this bridge locates
- * an implementation via BondingEngineFactory discovery (a class named
- * com.wearless.bonding.BondingEngineFactory with a no-arg create() returning
- * BondingEngine), converts app-side [com.wearless.app.link.AndroidLinkHandle]s
- * into bonding LinkHandles through java.lang.reflect.Proxy, and forwards
- * start/stop/stats.
+ * Honest-data rule kept: the engine itself refuses to start without a real
+ * data plane (ENGINE_NOT_INSTALLED) and every unmeasured value stays
+ * isMeasured=false / NOT MEASURED in the UI. This bridge never fakes success.
  */
 object BondingBridge {
 
@@ -41,105 +46,98 @@ object BondingBridge {
         data class Failed(val message: String) : State()
     }
 
-    private const val ENGINE_FACTORY = "com.wearless.bonding.BondingEngineFactory"
-    private const val IFACE_ENGINE = "com.wearless.bonding.BondingEngine"
-    private const val IFACE_HANDLE = "com.wearless.bonding.LinkHandle"
-
     val state = MutableStateFlow<State>(State.Stopped)
-    private var engine: Any? = null
+    private var engine: BondingEngine? = null
 
-    fun isEngineAvailable(): Boolean = try {
-        Class.forName(ENGINE_FACTORY)
-        true
-    } catch (_: ClassNotFoundException) {
-        false
-    }
+    /** True when the bonding classes are packaged and an engine instance exists. */
+    fun isEngineAvailable(): Boolean = engine != null ||
+        try {
+            Class.forName("com.wearless.bonding.DefaultBondingEngine")
+            true
+        } catch (_: ClassNotFoundException) {
+            false
+        }
 
     /**
-     * Attempt to start the bonding engine with the given config. Never fakes
-     * success: if the module is absent or start fails, returns the failure.
+     * Start the bonding engine. The engine (DefaultBondingEngine) itself
+     * returns Result.failure(BondingError.EngineNotInstalled) when no real
+     * data plane is present — that failure propagates honestly.
      */
     fun start(
         serverAddress: String,
         keyRef: String,
         schedulerWlb: Boolean,
-        links: List<com.wearless.app.link.AndroidLinkHandle>
+        links: List<AndroidLinkHandle>
     ): Result<Unit> {
-        if (!isEngineAvailable()) {
-            state.value = State.EngineNotWired
-            return Result.failure(IllegalStateException(
-                "Bonding engine (com.wearless.bonding) is not wired into this build. " +
-                "Tunnel is NOT up. No speeds exist."))
+        val e = engine ?: DefaultBondingEngine().also { engine = it }
+        val bondingLinks: List<LinkHandle> = links.map { h ->
+            BondingLinkHandle(h.id, LinkKind.values()[h.kindValue])
         }
-        return try {
-            val factory = Class.forName(ENGINE_FACTORY).getDeclaredConstructor().newInstance()
-            engine = factory.javaClass.getMethod("create").invoke(factory)
-            val handleIface = Class.forName(IFACE_HANDLE)
-            val proxies = links.map { h ->
-                Proxy.newProxyInstance(
-                    handleIface.classLoader, arrayOf(handleIface),
-                    java.lang.reflect.InvocationHandler { _, method, _ ->
-                        when (method.name) {
-                            "getId" -> h.id
-                            "getKind" -> enumConstant(method.returnType, h.kindValue)
-                            "hashCode" -> h.id.hashCode()
-                            "equals" -> false
-                            "toString" -> "AndroidLinkHandle(${h.id})"
-                            else -> null
-                        }
-                    })
-            }
-            val configCtor = Class.forName("com.wearless.bonding.BondingConfig")
-                .getConstructor(String::class.java, String::class.java)
-            val config = configCtor.newInstance(serverAddress, keyRef)
-            val result = Class.forName(IFACE_ENGINE).getMethod(
-                "start", Class.forName("com.wearless.bonding.BondingConfig"), List::class.java
-            ).invoke(engine, config, proxies) as Result<*>
-            if (result.isSuccess) {
-                state.value = State.Running
-                Result.success(Unit)
-            } else {
-                state.value = State.Failed(result.exceptionOrNull()?.message ?: "engine start failed")
-                Result.failure(result.exceptionOrNull() ?: IllegalStateException("engine start failed"))
-            }
-        } catch (t: Throwable) {
-            state.value = State.Failed(t.message ?: t.javaClass.name)
-            Result.failure(t)
-        }
+        val config = BondingConfig(
+            serverAddress = serverAddress,
+            keyRef = keyRef,
+            scheduler = if (schedulerWlb) Scheduler.WLB else Scheduler.MIN_RTT,
+            reorderBuffer = true
+        )
+        val result = e.start(config, bondingLinks)
+        state.value = if (result.isSuccess) State.Running
+        else State.Failed(result.exceptionOrNull()?.message ?: "engine start failed")
+        return result
     }
 
     fun stop() {
-        try {
-            engine?.let { e ->
-                Class.forName(IFACE_ENGINE).getMethod("stop").invoke(e)
-            }
-        } catch (_: Throwable) {
-            // engine absent or already stopped
-        }
-        engine = null
+        engine?.stop()
         state.value = State.Stopped
     }
 
     /**
-     * Latest snapshot converted to app-side values. Without a wired engine this
-     * always returns NOT_MEASURED data — no invented numbers.
+     * Convert the engine's latest snapshot to app-side values. Without a
+     * running engine this returns NOT_MEASURED — no invented numbers.
      */
-    fun snapshot(links: List<AppLink>): BridgeSnapshot {
-        if (engine == null || !isEngineAvailable()) return BridgeSnapshot.NOT_MEASURED
-        return try {
-            // BondingSnapshot is a data class; read its fields reflectively.
-            val statsFlow = Class.forName(IFACE_ENGINE).getMethod("stats").invoke(engine)
-            // Without a coroutine collector on the engine's Flow type we cannot
-            // pull a value generically; the concrete wiring happens when claude's
-            // module lands. Until then: not measured.
-            BridgeSnapshot.NOT_MEASURED
+    fun snapshot(uiLinks: List<AppLink>): BridgeSnapshot {
+        val e = engine as? DefaultBondingEngine ?: return BridgeSnapshot.NOT_MEASURED
+        val snap: BondingSnapshot = try {
+            e.currentSnapshot
         } catch (_: Throwable) {
-            BridgeSnapshot.NOT_MEASURED
+            return BridgeSnapshot.NOT_MEASURED
         }
+        val byId = uiLinks.associateBy { it.id }
+        val mapped = snap.links.map { ls ->
+            val ui = byId[ls.linkId] ?: AppLink(ls.linkId, ls.linkId, 0)
+            // Numbers only when actually measured; nulls mean NOT MEASURED in UI.
+            if (ls.isMeasured) ui.copy(
+                rxBps = ls.rxBps,
+                txBps = ls.txBps,
+                rxBytes = ls.rxBytes,
+                txBytes = ls.txBytes,
+                rttMs = ls.rttMs,
+                lossPct = ls.lossPct,
+                active = ls.active,
+                isMeasured = true
+            ) else ui.copy(
+                rxBps = null,
+                txBps = null,
+                rxBytes = null,
+                txBytes = null,
+                rttMs = null,
+                lossPct = null,
+                active = ls.active,
+                isMeasured = false
+            )
+        }
+        return BridgeSnapshot(
+            links = mapped,
+            aggregatedBps = if (snap.isMeasured) snap.aggregatedBps else null,
+            isMeasured = snap.isMeasured,
+            failoverActive = snap.failoverActive
+        )
     }
 
-    private fun enumConstant(enumType: Class<*>, ordinal: Int): Any? =
-        enumType.enumConstants?.getOrNull(ordinal)
-
     fun stateFlow(): StateFlow<State> = state
+
+    /** Compile-time implementation of the bonding LinkHandle for one Android link. */
+    private data class BondingLinkHandle(
+        override val id: String,
+        override val kind: LinkKind
+    ) : LinkHandle
 }
