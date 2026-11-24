@@ -136,3 +136,22 @@ Additional relevant flags:
 - Hugging Face Spaces: whether any free tier can run Docker Spaces (fetched docs say Gradio/Docker Spaces require a paid plan; TO VERIFY current ZeroGPU/free exceptions).
 - Fly.io: whether paying for a dedicated IPv4 is acceptable for this project's cost model (pricing not in fetched docs).
 - Render: whether WebSocket messages count as inbound traffic for the 15-minute spin-down timer (doc says inbound traffic includes WebSocket messages from existing connections, but message-frequency threshold is not quantified).
+
+## Fly.io and Oracle Always Free (TUN-capable options)
+
+### Fly.io dedicated IPv4 (for real UDP/TUN)
+- Source: https://fly.io/docs/about/pricing — dedicated IPv4 addresses are billed at **$2/month per address** (as of the pricing page). Shared IPv4 (via fly-proxy) is free but cannot carry raw UDP/TUN.
+- To get TUN+UDP on Fly.io you need a paid dedicated IPv4, which is not on the free plan (`https://docs.fly.io/about/free-plan`).
+- flyctl CLI + a Fly account token required to deploy.
+
+### Oracle Cloud Always Free (signup requirements)
+- Source: https://www.oracle.com/cloud/free/ and https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm
+- Signup requires a **credit card for verification** (no charge; Oracle places a small temporary authorization).
+- Always Free tier includes: 2 AMD Compute VMs (1/8 OCPU, 1 GB RAM each) OR up to 4 ARM Ampere A1 instances (up to 4 OCPU, 24 GB RAM total), 200 GB block storage, 10 TB/month outbound data transfer.
+- OCI Compute instances grant full root and support `/dev/net/tun` + `CAP_NET_ADMIN`, so mqvpn can create its TUN device there. This is the cheapest TUN-capable route if Fly.io cost is unacceptable.
+
+## Userspace (no-TUN) server exit — research conclusion (B)
+
+- mqvpn (`github.com/mp0rta/mqvpn`) requires `/dev/net/tun` + `CAP_NET_ADMIN` on the server; its server mode calls `open("/dev/net/tun")` and fails with `TUN create failed / open /dev/net/tun: No such file or directory` on Render. No no-TUN or userspace-socket mode is documented in mqvpn's README or server config (`server.conf.example` uses `TunName`).
+- Surveyed equivalent MASQUE/QUIC stacks (cloudflare/quiche, msquic, quic-go, aioquic): all are QUIC libraries, not VPN exits. None terminate a multipath tunnel and dial real TCP/UDP sockets without a TUN device. A userspace exit would require reimplementing the entire MASQUE CONNECT-IP handler plus a TCP/IP stack (smoltcp/lwIP) — out of scope for a bounded research round.
+- Verdict: **cannot be done on Render without TUN.** Do not fake it. Move to Oracle Always Free or Fly.io paid dedicated IPv4.
