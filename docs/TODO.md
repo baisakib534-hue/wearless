@@ -78,3 +78,13 @@
 1. **Build and test:** Run `./gradlew assembleDebug` and `:bonding:test` to verify all fixes compile and pass.
 2. **Hardware test:** Deploy to actual device with multiple links and VPS; verify failover works end-to-end.
 3. **RTT prober:** Implement active prober to populate `LinkState.rttNanos` for MinRTT auto-promotion.
+---
+
+## Design correction (2026-11-24) — built-in node config
+
+- [x] Built-in node config shipped in APK (`BuiltInNodeConfig.kt`: server `wearless-node-test.onrender.com`, key ref `ref:wearless-key-1`).
+- [x] `NodeConfigStore.get()` returns built-in defaults when no override exists; `isConfigured()` is always true.
+- [x] Home screen no longer blocks on "No node configured"; Start goes straight to connecting.
+- [x] Node Config is an optional override, pre-filled with the built-in node.
+- [ ] mqvpn engine embedding in APK (currently `engineAvailable={false}` → ENGINE_NOT_INSTALLED). Requires shipping the mqvpn binary or a userspace engine; server side also lacks TUN on Render.
+- [ ] Server-side userspace (no-TUN) exit for Render — research round pending.

@@ -6,6 +6,7 @@ import com.wearless.bonding.BondingEngine
 import com.wearless.bonding.BondingSnapshot
 import com.wearless.bonding.DefaultBondingEngine
 import com.wearless.bonding.LinkHandle
+import com.wearless.bonding.MqvpnEngineAdapter
 import com.wearless.bonding.LinkKind
 import com.wearless.bonding.Scheduler
 import com.wearless.app.link.AndroidLinkHandle

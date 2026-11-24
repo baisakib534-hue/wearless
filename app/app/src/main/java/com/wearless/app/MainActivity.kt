@@ -80,16 +80,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startTunnelWithConsent() {
-        if (!NodeConfigStore.isConfigured(this)) {
-            statusText.text = getString(R.string.status_no_node)
-            // Show transient feedback so the user knows the tap did something.
-            android.widget.Toast.makeText(
-                this,
-                getString(R.string.status_no_node),
-                android.widget.Toast.LENGTH_LONG
-            ).show()
-            return
-        }
+        // Built-in node is always present; Node Config is only an optional
+        // override. Proceed straight to connecting.
         // Request battery exemption once per user action so the watchdog can
         // keep running under Doze. Safe to call repeatedly; the system dedupes.
         requestBatteryExemption()

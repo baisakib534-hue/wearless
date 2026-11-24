@@ -41,13 +41,19 @@ object NodeConfigStore {
         )
     }
 
-    fun get(context: Context): NodeConfig? {
+    fun get(context: Context): NodeConfig {
         val p = prefs(context)
-        val server = p.getString(K_SERVER, null) ?: return null
-        val key = p.getString(K_KEY, null) ?: return null
-        val scheduler = p.getString(K_SCHEDULER, "auto") ?: "auto"
-        val reorder = p.getBoolean(K_REORDER, true)
+        val server = p.getString(K_SERVER, null) ?: BuiltInNodeConfig.SERVER_ADDRESS
+        val key = p.getString(K_KEY, null) ?: BuiltInNodeConfig.NODE_KEY_REF
+        val scheduler = p.getString(K_SCHEDULER, BuiltInNodeConfig.SCHEDULER) ?: BuiltInNodeConfig.SCHEDULER
+        val reorder = p.getBoolean(K_REORDER, BuiltInNodeConfig.REORDER_BUFFER)
         return NodeConfig(server, key, scheduler, reorder)
+    }
+
+    /** True only when the user has explicitly overridden the built-in node. */
+    fun isOverridden(context: Context): Boolean {
+        val p = prefs(context)
+        return p.contains(K_SERVER) && p.contains(K_KEY)
     }
 
     fun save(
@@ -69,5 +75,5 @@ object NodeConfigStore {
         prefs(context).edit().clear().apply()
     }
 
-    fun isConfigured(context: Context): Boolean = get(context) != null
+    fun isConfigured(context: Context): Boolean = true
 }

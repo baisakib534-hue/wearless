@@ -1,0 +1,18 @@
+You are claude, emulator/QA seat. Task: drive the Wearless app flows on the Orca emulator with real screenshots.
+
+Own exclusively: qa/emulator-flows/**. Do NOT edit app/**, node/**, scripts/**, or root docs. Do NOT git commit or push.
+
+Context: adb uiautomator is DEAD on wearless_aosp (null root node) — do not retry it. Wearless_aosp AVD is booted as emulator-5554. adb is at C:/Users/sakim/AppData/Local/Android/Sdk/platform-tools/adb.exe. Latest debug APK: app/app/build/outputs/apk/debug/app-debug.apk. Package com.wearless.app/.MainActivity.
+
+Binding method:
+1. adb install -r the APK; adb shell am start the activity.
+2. Capture screen with `adb exec-out screencap -p > <path>.png`. You have vision — READ the screenshot to locate controls. Tap with `adb shell input tap <x> <y>`. Type with `adb shell input text` (ASCII only).
+3. Screenshot after EVERY tap/type. Verify the state actually changed by reading the next screenshot. If a tap misses, re-read and adjust coordinates; do not claim success without a changed screenshot.
+4. If blind taps genuinely fail after real attempts, boot the wearless_pixel Google APIs AVD (or create an Android 14 Google APIs AVD), install there, and drive using `orca emulator ax` accessibility tree or screenshots.
+
+Flows to drive: paste node key into the key field; tap Connect; tap Start; toggle each per-link on/off switch; open Resource Monitor screen; rotate; dark mode if present. Node is a test value only — no real VPS key exists, so Connect is expected to FAIL at the engine step; record the actual failure state honestly. NEVER report speed numbers from emulator — all speeds are NOT MEASURED.
+
+Evidence: screenshots saved as qa/emulator-flows/NN-<flow>.png, plus qa/emulator-flows/REPORT.md with per-flow: driven/not, coordinates used, what changed, screenshot path, and any logcat errors. Include `adb logcat -d -s Wearless*` output.
+
+Skills: /testing-mobile-apps, /mobile-app-debugging, /verification-and-quality-assurance.
+Finish with a worker_done report containing your evidence (diff summary, command output, file paths). If you hit an error you cannot fix, escalate through orchestration with the EXACT error before stopping. Stopping silently is forbidden.

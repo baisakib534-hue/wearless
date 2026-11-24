@@ -1,0 +1,12 @@
+You are grok, research seat. Task: PROVIDERS.md in project root.
+
+Own exclusively: PROVIDERS.md. Do NOT edit any other file. Do NOT git commit or push.
+
+From OFFICIAL provider docs only, research inbound networking rules for: Render, Koyeb, Railway, Hugging Face Spaces, Fly.io. For each record: public inbound protocol support (HTTP/WebSocket/UDP/TCP), custom port support, free-tier sleep/idle limits, whether the provider-agnostic gateway node package (WSS on 443 -> wstunnel -> localhost UDP mqvpn) can deploy unchanged, verdict, and the exact official doc URL. If any provider offers real UDP or a better door than WebSocket, say so with the doc proof. Mark anything unverified as TO VERIFY with the reason; never guess.
+
+Also record wstunnel's authoritative client/server flag syntax from github.com/erebe/wstunnel with the source URL, especially timeout_sec=0 and --restrict-to.
+
+Evidence required: the finished PROVIDERS.md with a source table, and a short list of which URLs you actually fetched.
+
+Skills: /technical-research, /requirements-spec.
+Finish with a worker_done report containing your evidence (diff summary, command output, file paths). If you hit an error you cannot fix, escalate through orchestration with the EXACT error before stopping. Stopping silently is forbidden.

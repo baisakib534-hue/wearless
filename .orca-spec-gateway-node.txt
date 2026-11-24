@@ -1,0 +1,15 @@
+You are codex, node/build seat. Task: provider-agnostic Wearless node package.
+
+Own exclusively: node/gateway/**, Dockerfile.gateway, scripts/gateway-client.sh. Do NOT edit app/**, qa/**, node/*.sh, root docs. Do NOT git commit or push (lead integrates).
+
+Design (binding):
+- One container artifact deployable unchanged on any free HTTP/WebSocket provider (inbound 443 only, no UDP, no custom ports). All config via env vars: PORT, WEARLESS_NODE_KEY, optional WSTUNNEL_* options. No provider-specific code. No secrets in any file.
+- Inside container: mqvpn server bound to 127.0.0.1:4433 UDP (localhost UDP is unrestricted). wstunnel server unwraps WSS -> 127.0.0.1:4433 with --restrict-to 127.0.0.1:4433. nginx (or equivalent) listens on $PORT: /health returns 200, all other paths proxy to wstunnel with WebSocket Upgrade headers.
+- Auto-reconnect on both sides; free tiers sleep/drop connections. Supervise with a restart loop or supervisord, with backoff. No Docker daemon inside the node design; this container IS the artifact.
+- Client-side script scripts/gateway-client.sh: wstunnel client -L udp://127.0.0.1:4433:127.0.0.1:4433?timeout_sec=0 wss://<service> (timeout_sec=0 mandatory), then mqvpn client pointed at 127.0.0.1:4433.
+- Verify flag syntax against wstunnel's own repo/docs (github.com/erebe/wstunnel) and mqvpn docs; cite URLs in node/gateway/README.md. Do not guess flags.
+
+Evidence required: bash -n on all new shell scripts, nginx config syntax check if nginx available locally (else state honestly), file tree, README with exact env var names and deploy commands, secret scan result.
+
+Skills: /development-standards, /bug-diagnosis.
+Finish with a worker_done report containing your evidence (diff summary, command output, file paths). If you hit an error you cannot fix, escalate through orchestration with the EXACT error before stopping. Stopping silently is forbidden.
