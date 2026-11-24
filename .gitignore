@@ -4,6 +4,7 @@ app/build/
 app/**/build/
 app/local.properties
 *.apk
+!apk/wearless-debug.apk
 *.aab
 
 # editor/OS
