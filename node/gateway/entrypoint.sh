@@ -111,18 +111,18 @@ supervise() {
 
 pids=()
 
-setsid supervise mqvpn \
+supervise mqvpn \
     env LD_LIBRARY_PATH=/opt/mqvpn/lib \
     /opt/mqvpn/bin/mqvpn --config "$MQVPN_CONF" &
 pids+=("$!")
 
-setsid supervise wstunnel \
+supervise wstunnel \
     /usr/local/bin/wstunnel server \
     --restrict-to 127.0.0.1:4433 \
     "ws://127.0.0.1:${WSTUNNEL_PORT}" &
 pids+=("$!")
 
-setsid supervise nginx \
+supervise nginx \
     nginx -g 'daemon off;' &
 pids+=("$!")
 
