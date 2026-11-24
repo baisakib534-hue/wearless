@@ -4,6 +4,7 @@ import com.wearless.app.model.AppLink
 import com.wearless.bonding.BondingConfig
 import com.wearless.bonding.BondingEngine
 import com.wearless.bonding.BondingSnapshot
+import com.wearless.app.vpn.MqvpnBinaryExtractor
 import com.wearless.bonding.DefaultBondingEngine
 import com.wearless.bonding.LinkHandle
 import com.wearless.bonding.MqvpnEngineAdapter
@@ -75,7 +76,12 @@ object BondingBridge {
         reorderBuffer: Boolean,
         links: List<AndroidLinkHandle>
     ): Result<Unit> {
-        val e = engine ?: DefaultBondingEngine().also { engine = it }
+        val e = engine ?: DefaultBondingEngine(
+            com.wearless.bonding.MqvpnEngineAdapter {
+                val f = java.io.File("/data/data/com.wearless.app/files/mqvpn")
+                f.exists() && f.canExecute()
+            }
+        ).also { engine = it }
         val bondingLinks: List<LinkHandle> = links.map { h ->
             BondingLinkHandle(h.id, LinkKind.values()[h.kindValue])
         }
