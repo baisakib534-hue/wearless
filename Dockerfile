@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         iproute2 \
         iptables \
         libstdc++6 \
+        libevent-2.1-7 \
         nginx \
         openssl \
         procps \
