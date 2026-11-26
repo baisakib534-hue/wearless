@@ -34,6 +34,7 @@ android {
 
 dependencies {
     implementation(project(":bonding"))
+    implementation(files("libs/wearless.aar"))
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
@@ -42,3 +43,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
+
+

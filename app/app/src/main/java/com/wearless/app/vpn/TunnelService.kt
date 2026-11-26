@@ -17,6 +17,8 @@ import com.wearless.app.bonding.BondingBridge
 import com.wearless.bonding.Scheduler
 import com.wearless.app.link.AndroidLinkHandle
 import com.wearless.app.secure.NodeConfigStore
+import java.io.IOException
+import wearless.Wearless
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -69,8 +71,16 @@ class TunnelService : VpnService() {
                 return START_NOT_STICKY
             }
             else -> {
+                // Extract the embedded engine before the foreground notification
+                // and before BondingBridge.start checks /files/mqvpn.
+                val enginePresent = MqvpnBinaryExtractor.isPresent(this)
+                if (!enginePresent) {
+                    BondingBridge.state.value = BondingBridge.State.Failed(
+                        "ENGINE_NOT_INSTALLED: mqvpn engine not found on this device"
+                    )
+                }
                 startForegroundWithType()
-                startTunnel()
+                if (enginePresent) startTunnel()
             }
         }
         return START_STICKY
@@ -179,6 +189,30 @@ class TunnelService : VpnService() {
         @Suppress("DEPRECATION")
         protect(iface.fd)
 
+        // Start the real userspace data plane: Android TUN -> gVisor ->
+        // authenticated Wearless WebSocket -> node egress socket. This never
+        // dials destinations directly from the phone.
+        try {
+            Wearless.start(
+                "wss://${cfg.serverAddress}",
+                cfg.keyRef,
+                object : wearless.ProtectFunc {
+                    override fun protect(fd: Long) {
+                        if (!this@TunnelService.protect(fd.toInt())) {
+                            throw IOException("outer socket protect failed")
+                        }
+                    }
+                },
+                iface.fd.toLong()
+            )
+        } catch (e: Throwable) {
+            stopTunnel()
+            BondingBridge.state.value = BondingBridge.State.Failed(
+                "Userspace tunnel start failed: ${e.message}"
+            )
+            return
+        }
+
         startWatchdog()
     }
 
@@ -233,6 +267,11 @@ class TunnelService : VpnService() {
         watchdog = null
         tunFd?.close()
         tunFd = null
+        try {
+            Wearless.stop()
+        } catch (_: Throwable) {
+            // Stop best effort; no fake success or failure.
+        }
         BondingBridge.stop()
         engineStarted = false
     }
@@ -248,3 +287,4 @@ class TunnelService : VpnService() {
         super.onDestroy()
     }
 }
+

@@ -7,7 +7,7 @@ package com.wearless.app.secure
  */
 object BuiltInNodeConfig {
     const val SERVER_ADDRESS = "wearless-node-test.onrender.com"
-    const val NODE_KEY_REF = "ref:wearless-key-1"
+    const val NODE_KEY_REF = "wearless-test-key-2026"
     const val SCHEDULER = "auto"
     const val REORDER_BUFFER = true
 }
