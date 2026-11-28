@@ -12,4 +12,4 @@ services:
       - key: WEARLESS_NODE_KEY
         value: wearless-test-key-2026
       - key: WEARLESS_ALLOWED_HOSTS
-        value: "example.com,api.github.com,cloudflare.com"
+        value: "example.com,api.github.com,cloudflare.com,raw.githubusercontent.com"

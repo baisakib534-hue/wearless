@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM golang:1.23-alpine AS build
 WORKDIR /src
-COPY shared/go.mod shared/go.sum /src/shared/
+COPY shared/go.mod /src/shared/
 COPY node/gateway/userspace/go.mod node/gateway/userspace/go.sum /src/node/gateway/userspace/
 RUN cd /src/node/gateway/userspace && go mod download
 COPY shared /src/shared
