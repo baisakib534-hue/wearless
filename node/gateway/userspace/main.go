@@ -34,6 +34,7 @@ type server struct {
 	activeConnsMu sync.Mutex
 	totalConns    uint64
 	totalConnsMu  sync.Mutex
+	closeMu       sync.Mutex
 }
 
 func (s *server) active() int64 {
@@ -247,11 +248,14 @@ func (s *server) closeDownstream(conn net.Conn, connectionID *uint64) {
 	if conn == nil {
 		return
 	}
-	_ = conn.Close()
-	if connectionID != nil && *connectionID != 0 {
-		s.decActive()
-		*connectionID = 0
+	s.closeMu.Lock()
+	defer s.closeMu.Unlock()
+	if connectionID == nil || *connectionID == 0 {
+		return
 	}
+	_ = conn.Close()
+	s.decActive()
+	*connectionID = 0
 }
 
 func writeFrame(conn *websocket.Conn, frame protocol.Frame) error {
